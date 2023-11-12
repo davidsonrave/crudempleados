@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import "./index.css";
-import Swal from 'sweetalert2'
-
-
+import Swal from "sweetalert2";
 
 function App() {
   const [nombre, setNombre] = useState("");
@@ -17,74 +15,123 @@ function App() {
   const [empleados, setEmpleados] = useState([]);
 
   const add = () => {
+    // Basic form validation
+    if (!nombre || !apellido || !direccion || !email) {
+      Swal.fire({
+        title: "Campos incompletos",
+        text: "Por favor, complete todos los campos",
+        icon: "warning",
+      });
+      return;
+    }
     Axios.post("http://localhost:3001/create", {
-        nombre: nombre,
-        apellido: apellido,
-        direccion: direccion,
-        email: email,
+      nombre: nombre,
+      apellido: apellido,
+      direccion: direccion,
+      email: email,
     })
-    .then(() => {
+      .then(() => {
         getEmpleados();
         limpiarCampos();
         Swal.fire({
           title: "<p>Registro Exitoso</p>",
           html: `<i>El empleado ${nombre} fue registrado con éxito</i>`,
-          icon: 'success'
+          icon: "success",
         });
-    })
-    .catch(error => {
-        console.error("Error al agregar empleado:", error);
-    });
-};
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text:
+            JSON.parce(JSON.stringify(error)).message === "Network Error"
+              ? "Intente más tarde"
+              : JSON.parce(JSON.stringify(error)).message,
+        });
+      });
+  };
 
-
-
-const update = () => {
+  const update = () => {
+    if (!nombre || !apellido || !direccion || !email) {
+      Swal.fire({
+        title: "<p>Error</p>",
+        html: `<i>Por favor, complete todos los campos</i>`,
+        icon: "error",
+      });
+      return;
+    }
     Axios.put("http://localhost:3001/update", {
-        id: id,
-        nombre: nombre,
-        apellido: apellido,
-        direccion: direccion,
-        email: email,
+      id: id,
+      nombre: nombre,
+      apellido: apellido,
+      direccion: direccion,
+      email: email,
     })
-    .then(() => {
+      .then(() => {
         getEmpleados();
         limpiarCampos();
         Swal.fire({
           title: "<p>Registro Actualizado</p>",
           html: `<i>El empleado ${nombre} fue Actualizado  con éxito</i>`,
-          icon: 'success'
+          icon: "success",
+          timer: 3000,
         });
-    })
-    .catch(error => {
-        console.error("Error al actualizar empleado:", error);
-    });
-};
-const deleteEmpleado = (id) => {
-  Axios.delete(`http://localhost:3001/delete/${id}`)
-    .then(() => {
-      getEmpleados();
-      limpiarCampos();
-      Swal.fire({
-        title: "<p>Registro Eliminado</p>",
-        html: `<i>El empleado ${nombre} fue Eliminado  con éxito</i>`,
-        icon: 'success'
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text:
+            JSON.parce(JSON.stringify(error)).message === "Network Error"
+              ? "Intente más tarde"
+              : JSON.parce(JSON.stringify(error)).message,
+        });
       });
-    })
-    .catch(error => {
-      console.error("Error al eliminar empleado:", error);
+  };
+  const deleteEmpleado = (empleado) => {
+    Swal.fire({
+      title: "Confirmar Eliminado?",
+      html: `<i>Quiere eliminar A: ${empleado.nombre}</i>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "SÍ, Eliminar!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Axios.delete(`http://localhost:3001/delete/${empleado.id}`)
+          .then(() => {
+            getEmpleados();
+            limpiarCampos();
+            Swal.fire({
+              title: "Eliminado!",
+              text: `${empleado.nombre} fue eliminado`,
+              showConfirmButton: false,
+              timer: 3000,
+            });
+          })
+          .catch((error) => {
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "No se logró eliminar",
+              footer:
+                JSON.parce(JSON.stringify(error)).message === "Network Error"
+                  ? "Intente más tarde"
+                  : JSON.parce(JSON.stringify(error)).message,
+            });
+          });
+      }
     });
-};
+  };
 
-
- const limpiarCampos= ()=>{
-  setNombre('');
-   setApellido('');
-   setDireccion('');
-   setEmail('')
-   setEditar(false)
-
- }
+  const limpiarCampos = () => {
+    setNombre("");
+    setApellido("");
+    setDireccion("");
+    setEmail("");
+    setEditar(false);
+  };
 
   const editarEmpleado = (empleado) => {
     setEditar(true);
@@ -106,10 +153,8 @@ const deleteEmpleado = (id) => {
       });
   };
   useEffect(() => {
-   getEmpleados();
-  }, [])
-  
- 
+    getEmpleados();
+  }, []);
 
   return (
     <>
@@ -254,13 +299,12 @@ const deleteEmpleado = (id) => {
                     </button>
                   </td>
                   <td className="py-2 px-4">
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-red-600 hover:bg-red-600 focus:outline-none focus:border-red-600 focus:shadow-outline-green active:bg-red-600"
-                     onClick={() => {
-                      deleteEmpleado(empleado.id);
-                    }}
-                    
+                    <button
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-red-600 hover:bg-red-600 focus:outline-none focus:border-red-600 focus:shadow-outline-green active:bg-red-600"
+                      onClick={() => {
+                        deleteEmpleado(empleado);
+                      }}
                     >
-                      
                       Eliminar
                     </button>
                   </td>
